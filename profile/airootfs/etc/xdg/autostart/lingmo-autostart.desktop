@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Lingmo Autostart
+Comment=Start Lingmo dock/topbar after session is ready
+Exec=/usr/local/bin/lingmo-autostart
+NoDisplay=true
+X-KDE-autostart-after=panel
+X-GNOME-Autostart-enabled=true

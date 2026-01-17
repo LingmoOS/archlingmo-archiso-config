@@ -1,0 +1,243 @@
+./scripts/run-iso.sh
+make[1]: Entering directory '/home/devalexandre/projects/devalexandre/archlingmo-archiso-config'
+docker build --progress=plain -t archlingmo-archiso .
+docker run --rm \
+	-v "/home/devalexandre/projects/devalexandre/lingmo-arch-pkgbuilder:/pkgbuilder:ro" \
+	-v "/home/devalexandre/projects/devalexandre/archlingmo-archiso-config/out/localrepo:/localrepo" \
+	-e WITH_KWIN_PLUGINS="1" \
+	-e SKIP_PKGS="lingmo-settings" \
+	-e STOP_ON_ERROR="0" \
+	-e ONLY_PKGS="" \
+	archlingmo-archiso sh -lc 'set -euo pipefail; \
+			rm -rf /tmp/pkgbuilder; mkdir -p /tmp/pkgbuilder; cp -r /pkgbuilder/. /tmp/pkgbuilder/; \
+			chown -R builder:builder /tmp/pkgbuilder; \
+			chmod -R u+rwX /tmp/pkgbuilder; \
+			chown -R builder:builder /localrepo; \
+			su builder -s /bin/sh -c '"'"'set -euo pipefail; \
+			cd /tmp/pkgbuilder; \
+			pkgs_file=pkgs; \
+			if [ -n "${ONLY_PKGS:-}" ]; then printf "%s\n" $ONLY_PKGS | tr " " "\n" > /tmp/pkgs0 && pkgs_file=/tmp/pkgs0; fi; \
+		if [ "${WITH_KWIN_PLUGINS:-0}" != "1" ]; then grep -v "^lingmo-kwin-plugins$" pkgs > /tmp/pkgs1 && pkgs_file=/tmp/pkgs1; fi; \
+				if [ -n "${SKIP_PKGS:-}" ]; then \
+					pattern="$(printf "%s" "$SKIP_PKGS" | tr " " "|" )"; \
+					grep -v -E "^($pattern)$" "$pkgs_file" > /tmp/pkgs2; \
+					pkgs_file=/tmp/pkgs2; \
+				fi; \
+			failed=""; \
+				while IFS= read -r target; do \
+					[ -z "$target" ] && continue; \
+					[ -d "$target" ] || { echo "Directory $target does not exist"; continue; }; \
+				echo "Processing target: $target"; \
+				if ! ( cd "$target" && makepkg -Ccfsi --noconfirm ); then \
+					echo "FAILED: $target" >&2; \
+					failed="$failed $target"; \
+					if [ "${STOP_ON_ERROR:-0}" = "1" ]; then exit 1; fi; \
+				else \
+					cp -f "$target"/*.pkg.tar.zst /localrepo/ 2>/dev/null || true; \
+					fi; \
+				done < "$pkgs_file"; \
+				if ls /localrepo/*.pkg.tar.zst >/dev/null 2>&1; then repo-add /localrepo/lingmo-local.db.tar.gz /localrepo/*.pkg.tar.zst; else echo "No packages built." >&2; fi; \
+				if [ -n "$failed" ]; then echo "Some packages failed:$failed" >&2; fi'"'"''
+Processing target: liblingmo
+==> Making package: liblingmo 1.9.10-0 (Thu Jan  8 18:02:53 2026)
+==> Checking runtime dependencies...
+==> Installing missing dependencies...
+resolving dependencies...
+looking for conflicting packages...
+
+Package (188)                         New Version             Net Change  Download Size
+
+extra/alsa-lib                        1.2.15.1-1                1.72 MiB       0.49 MiB
+extra/alsa-topology-conf              1.2.5.1-4                 0.33 MiB       0.01 MiB
+extra/alsa-ucm-conf                   1.2.15.1-1                0.61 MiB       0.12 MiB
+extra/avahi                           1:0.9rc2-1                1.94 MiB       0.42 MiB
+extra/bluez                           5.85-1                    1.46 MiB       0.56 MiB
+extra/cairo                           1.18.4-1                  1.59 MiB       0.61 MiB
+extra/cdparanoia                      10.2-9                    0.18 MiB       0.07 MiB
+extra/default-cursors                 3-1                       0.00 MiB       0.00 MiB
+extra/double-conversion               3.4.0-1                   0.19 MiB       0.06 MiB
+extra/duktape                         2.7.0-7                   0.78 MiB       0.17 MiB
+extra/flac                            1.5.0-1                   1.14 MiB       0.33 MiB
+extra/fontconfig                      2:2.17.1-1                1.12 MiB       0.37 MiB
+extra/freetype2                       2.14.1-1                  1.66 MiB       0.53 MiB
+extra/fribidi                         1.0.16-2                  0.24 MiB       0.07 MiB
+core/gpm                              1.20.7.r38.ge82d1a6-6     0.38 MiB       0.13 MiB
+extra/graphene                        1.10.8-2                  0.98 MiB       0.10 MiB
+extra/graphite                        1:1.3.14-5                0.20 MiB       0.08 MiB
+extra/gst-plugins-base                1.26.10-1                 0.62 MiB       0.21 MiB
+extra/gst-plugins-base-libs           1.26.10-1                12.43 MiB       2.35 MiB
+extra/gstreamer                       1.26.10-1                11.41 MiB       2.02 MiB
+extra/harfbuzz                        12.3.0-1                  4.35 MiB       1.12 MiB
+extra/hicolor-icon-theme              0.18-1                    0.05 MiB       0.01 MiB
+extra/iso-codes                       4.20.1-1                 22.30 MiB       3.60 MiB
+extra/json-glib                       1.10.8-1                  1.01 MiB       0.17 MiB
+extra/karchive5                       5.116.0-2                 0.60 MiB       0.15 MiB
+extra/kauth5                          5.116.0-2                 0.41 MiB       0.11 MiB
+extra/kbookmarks5                     5.116.0-2                 0.65 MiB       0.15 MiB
+extra/kcodecs5                        5.116.0-2                 0.64 MiB       0.15 MiB
+extra/kcompletion5                    5.116.0-2                 0.40 MiB       0.12 MiB
+extra/kconfig5                        5.116.0-2                 1.51 MiB       0.36 MiB
+extra/kconfigwidgets5                 5.116.0-3                 1.54 MiB       0.40 MiB
+extra/kcoreaddons5                    5.116.0-2                 1.96 MiB       0.49 MiB
+extra/kcrash5                         5.116.0-2                 0.06 MiB       0.02 MiB
+extra/kdbusaddons5                    5.116.0-2                 0.22 MiB       0.06 MiB
+extra/kded5                           5.116.0-2                 0.08 MiB       0.03 MiB
+extra/kglobalaccel5                   5.116.0-2                 0.40 MiB       0.12 MiB
+extra/kguiaddons5                     5.116.0-2                 0.28 MiB       0.09 MiB
+extra/ki18n5                          5.116.0-2                17.05 MiB       1.58 MiB
+extra/kiconthemes5                    5.116.0-2                 0.49 MiB       0.14 MiB
+extra/kitemviews5                     5.116.0-2                 0.34 MiB       0.11 MiB
+extra/kjobwidgets5                    5.116.0-2                 0.41 MiB       0.10 MiB
+extra/knotifications5                 5.116.0-3                 0.47 MiB       0.14 MiB
+extra/kservice5                       5.116.0-3                 0.99 MiB       0.29 MiB
+extra/ktextwidgets5                   5.116.0-2                 1.41 MiB       0.30 MiB
+extra/kwallet5                        5.116.0-5                 1.57 MiB       0.26 MiB
+extra/kwayland5                       5.116.0-2                 2.60 MiB       0.52 MiB
+extra/kwidgetsaddons5                 5.116.0-2                 7.00 MiB       1.61 MiB
+extra/kwindowsystem5                  5.116.0-2                 0.70 MiB       0.19 MiB
+extra/kxmlgui5                        5.116.0-2                 3.40 MiB       0.71 MiB
+extra/lame                            3.100-6                   1.20 MiB       0.33 MiB
+extra/libasyncns                      1:0.8+r3+g68cd5af-3       0.05 MiB       0.02 MiB
+extra/libatasmart                     0.19-7                    0.10 MiB       0.03 MiB
+extra/libb2                           0.98.1-3                  0.13 MiB       0.04 MiB
+extra/libblockdev                     3.4.0-1                   3.56 MiB       0.25 MiB
+extra/libblockdev-crypto              3.4.0-1                   0.08 MiB       0.03 MiB
+extra/libblockdev-fs                  3.4.0-1                   0.13 MiB       0.04 MiB
+extra/libblockdev-loop                3.4.0-1                   0.02 MiB       0.01 MiB
+extra/libblockdev-mdraid              3.4.0-1                   0.03 MiB       0.01 MiB
+extra/libblockdev-nvme                3.4.0-1                   0.08 MiB       0.02 MiB
+extra/libblockdev-part                3.4.0-1                   0.04 MiB       0.02 MiB
+extra/libblockdev-smart               3.4.0-1                   0.12 MiB       0.02 MiB
+extra/libblockdev-swap                3.4.0-1                   0.02 MiB       0.01 MiB
+extra/libbytesize                     2.11-1                    0.09 MiB       0.02 MiB
+extra/libcanberra                     1:0.30+r2+gc0620e4-6      0.37 MiB       0.08 MiB
+extra/libcups                         2:2.4.16-1                0.77 MiB       0.27 MiB
+extra/libdaemon                       0.14-6                    0.06 MiB       0.02 MiB
+extra/libdatrie                       0.2.14-1                  0.49 MiB       0.11 MiB
+extra/libdbusmenu-qt5                 0.9.3+16.04.20160218-7    0.63 MiB       0.16 MiB
+extra/libdrm                          2.4.131-1                 1.28 MiB       0.35 MiB
+core/libedit                          20250104_3.1-1            0.26 MiB       0.11 MiB
+extra/libevdev                        1.13.6-1                  0.21 MiB       0.06 MiB
+extra/libglvnd                        1.7.0-3                   3.34 MiB       0.32 MiB
+extra/libgudev                        238-3                     0.38 MiB       0.04 MiB
+extra/libice                          1.1.2-1                   0.36 MiB       0.08 MiB
+extra/libimobiledevice                1.4.0-1                   6.22 MiB       0.66 MiB
+extra/libimobiledevice-glue           1.3.2-1                   0.10 MiB       0.04 MiB
+extra/libinput                        1.30.1-1                  0.75 MiB       0.21 MiB
+extra/libjpeg-turbo                   3.1.2-1                   2.42 MiB       0.56 MiB
+extra/libkscreen                      6.5.4-1                   1.00 MiB       0.28 MiB
+extra/libmbim                         1.34.0-1                  3.62 MiB       0.47 MiB
+extra/libmm-glib                      1.24.2-1                  7.42 MiB       0.55 MiB
+extra/libndp                          1.9-1                     0.06 MiB       0.02 MiB
+extra/libnewt                         0.52.25-1                 0.27 MiB       0.09 MiB
+extra/libnm                           1.54.3-1                  6.27 MiB       0.88 MiB
+extra/libnvme                         1.16.1-1                  1.73 MiB       0.30 MiB
+extra/libogg                          1.3.6-1                   0.44 MiB       0.19 MiB
+extra/libpciaccess                    0.18.1-2                  0.06 MiB       0.02 MiB
+extra/libpgm                          5.3.128-3                 0.35 MiB       0.17 MiB
+extra/libplist                        2.7.0-1                   0.53 MiB       0.16 MiB
+extra/libpng                          1.6.53-1                  0.58 MiB       0.25 MiB
+extra/libproxy                        0.5.12-1                  0.10 MiB       0.03 MiB
+extra/libpulse                        17.0+r98+gb096704c0-1     1.46 MiB       0.39 MiB
+extra/libqmi                          1.38.0-1                 21.52 MiB       1.93 MiB
+extra/libqrtr-glib                    1.4.0-1                   0.13 MiB       0.03 MiB
+extra/libsm                           1.2.6-1                   0.26 MiB       0.04 MiB
+extra/libsndfile                      1.2.2-4                   0.93 MiB       0.31 MiB
+extra/libsodium                       1.0.20-1                  0.53 MiB       0.18 MiB
+extra/libtatsu                        1.0.5-1                   0.05 MiB       0.02 MiB
+extra/libteam                         1.32-3                    0.33 MiB       0.11 MiB
+extra/libthai                         0.1.29-3                  1.22 MiB       0.27 MiB
+extra/libtheora                       1.2.0-1                   2.34 MiB       0.42 MiB
+extra/libunwind                       1.8.2-1                   0.29 MiB       0.13 MiB
+extra/liburing                        2.13-1                    0.41 MiB       0.21 MiB
+extra/libusbmuxd                      2.1.1-1                   0.08 MiB       0.03 MiB
+extra/libvorbis                       1.3.7-4                   0.83 MiB       0.18 MiB
+extra/libwacom                        2.17.0-1                  1.56 MiB       0.17 MiB
+extra/libx11                          1.8.12-2                  9.79 MiB       2.00 MiB
+extra/libxau                          1.0.12-1                  0.02 MiB       0.01 MiB
+extra/libxcb                          1.17.0-1                  3.87 MiB       0.97 MiB
+extra/libxcomposite                   0.4.6-2                   0.02 MiB       0.01 MiB
+extra/libxdmcp                        1.1.5-1                   0.13 MiB       0.03 MiB
+extra/libxext                         1.3.6-1                   0.30 MiB       0.10 MiB
+extra/libxfixes                       6.0.2-1                   0.04 MiB       0.01 MiB
+extra/libxft                          2.3.9-1                   0.13 MiB       0.06 MiB
+extra/libxi                           1.8.2-1                   0.48 MiB       0.15 MiB
+extra/libxkbcommon                    1.13.1-1                  1.03 MiB       0.27 MiB
+extra/libxkbcommon-x11                1.13.1-1                  0.10 MiB       0.03 MiB
+extra/libxrender                      0.9.12-1                  0.09 MiB       0.03 MiB
+extra/libxshmfence                    1.3.3-1                   0.02 MiB       0.01 MiB
+extra/libxtst                         1.2.5-1                   0.11 MiB       0.03 MiB
+extra/libxv                           1.0.13-1                  0.06 MiB       0.03 MiB
+extra/libxxf86vm                      1.1.6-1                   0.03 MiB       0.02 MiB
+extra/llvm-libs                       21.1.6-1                150.01 MiB      38.45 MiB
+extra/lm_sensors                      1:3.6.2-1                 0.48 MiB       0.13 MiB
+extra/lua                             5.4.8-2                   1.50 MiB       0.35 MiB
+extra/md4c                            0.5.2-1                   0.25 MiB       0.08 MiB
+core/mdadm                            4.4-2                     1.01 MiB       0.41 MiB
+extra/media-player-info               26-1                      0.18 MiB       0.03 MiB
+extra/mesa                            1:25.3.3-1               44.86 MiB      11.23 MiB
+extra/mobile-broadband-provider-info  20251101-1                0.50 MiB       0.06 MiB
+extra/modemmanager                    1.24.2-1                  4.65 MiB       1.14 MiB
+extra/mpg123                          1.33.4-1                  1.18 MiB       0.44 MiB
+extra/mtdev                           1.1.7-1                   0.05 MiB       0.02 MiB
+extra/networkmanager                  1.54.3-1                 15.38 MiB       3.63 MiB
+core/nspr                             4.38.2-1                  0.71 MiB       0.19 MiB
+core/nss                              3.119.1-1                 5.22 MiB       1.64 MiB
+extra/openal                          1.25.0-1                  2.60 MiB       0.90 MiB
+extra/opus                            1.6-1                     4.16 MiB       3.29 MiB
+extra/orc                             0.4.41-1                  1.29 MiB       0.26 MiB
+extra/pango                           1:1.57.0-2                2.33 MiB       0.41 MiB
+extra/parted                          3.6-2                     2.42 MiB       0.52 MiB
+core/pcre                             8.45-4                    3.50 MiB       0.98 MiB
+extra/pcsclite                        2.4.1-1                   0.30 MiB       0.10 MiB
+extra/pixman                          0.46.4-1                  0.74 MiB       0.28 MiB
+extra/polkit                          127-3                     1.95 MiB       0.40 MiB
+extra/polkit-qt5                      0.200.0-1                 0.33 MiB       0.08 MiB
+core/ppp                              2.5.2-1                   0.86 MiB       0.30 MiB
+extra/qt5-base                        5.15.18+kde+r109-2       63.20 MiB      13.14 MiB
+extra/qt5-declarative                 5.15.18+kde+r23-1        23.35 MiB       4.82 MiB
+extra/qt5-multimedia                  5.15.18+kde+r2-1          3.40 MiB       0.73 MiB
+extra/qt5-speech                      5.15.18+kde+r1-1          0.17 MiB       0.05 MiB
+extra/qt5-svg                         5.15.18+kde+r5-1          0.49 MiB       0.15 MiB
+extra/qt5-translations                5.15.18-1                14.71 MiB       1.86 MiB
+extra/qt5-wayland                     5.15.18+kde+r55-1         6.04 MiB       1.08 MiB
+extra/qt5-x11extras                   5.15.18-1                 0.04 MiB       0.01 MiB
+extra/qt6-base                        6.10.1-1                 64.32 MiB      15.06 MiB
+extra/qt6-translations                6.10.1-1                 14.72 MiB       1.89 MiB
+extra/shared-mime-info                2.4-2                     4.57 MiB       0.60 MiB
+extra/slang                           2.3.3-4                   3.36 MiB       0.81 MiB
+extra/solid5                          5.116.0-2                 1.76 MiB       0.36 MiB
+extra/sonnet5                         5.116.0-2                 1.66 MiB       0.33 MiB
+extra/sound-theme-freedesktop         0.8-6                     0.45 MiB       0.36 MiB
+extra/spirv-tools                     1:1.4.335.0-1             7.51 MiB       1.89 MiB
+extra/tdb                             1.4.14-1                  0.23 MiB       0.07 MiB
+extra/tslib                           1.24-1                    0.47 MiB       0.10 MiB
+extra/udisks2                         2.11.0-1                  7.87 MiB       0.76 MiB
+extra/upower                          1.91.0-1                  0.84 MiB       0.16 MiB
+extra/volume_key                      0.3.12-11                 0.68 MiB       0.13 MiB
+extra/wayland                         1.24.0-1                  0.82 MiB       0.14 MiB
+core/wpa_supplicant                   2:2.11-3                  6.60 MiB       1.70 MiB
+extra/xcb-proto                       1.17.0-3                  1.02 MiB       0.13 MiB
+extra/xcb-util                        0.4.1-2                   0.03 MiB       0.01 MiB
+extra/xcb-util-cursor                 0.1.6-1                   0.03 MiB       0.01 MiB
+extra/xcb-util-image                  0.4.1-3                   0.05 MiB       0.02 MiB
+extra/xcb-util-keysyms                0.4.1-5                   0.02 MiB       0.01 MiB
+extra/xcb-util-renderutil             0.3.10-2                  0.03 MiB       0.01 MiB
+extra/xcb-util-wm                     0.4.2-2                   0.21 MiB       0.03 MiB
+extra/xdg-utils                       1.2.1-2                   0.30 MiB       0.06 MiB
+extra/xkeyboard-config                2.46-1                   10.21 MiB       0.86 MiB
+extra/xorgproto                       2025.1-1                  1.47 MiB       0.24 MiB
+extra/zeromq                          4.3.5-2                   3.05 MiB       0.56 MiB
+extra/bluez-qt5                       5.116.0-2                 0.91 MiB       0.23 MiB
+extra/kio5                            5.116.0-5                21.82 MiB       3.87 MiB
+extra/libkscreen5                     5.27.12-2                 0.77 MiB       0.21 MiB
+lingmo/modemmanager-qt5               5.116.0-1                 1.26 MiB       0.56 MiB
+extra/networkmanager-qt5              5.116.0-2                 1.35 MiB       0.33 MiB
+extra/qt5-quickcontrols2              5.15.18+kde+r5-1          8.61 MiB       1.50 MiB
+extra/qt5-sensors                     5.15.18-1                 0.88 MiB       0.17 MiB
+
+Total Download Size:   157.59 MiB
+Total Installed Size:  731.43 MiB
+
+:: Proceed with installation? [Y/n] 
+:: Retrieving packages...

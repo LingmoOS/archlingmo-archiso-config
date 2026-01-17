@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/lingmo-session"
+mkdir -p "$log_dir"
+log_file="$log_dir/session.log"
+
+if [ -w /dev/ttyS0 ]; then
+  exec > >(tee -a "$log_file" /dev/ttyS0) 2>&1
+else
+  exec >>"$log_file" 2>&1
+fi
+
+echo "----"
+echo "start: $(date -Is)"
+echo "DISPLAY=${DISPLAY:-}"
+echo "XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-}"
+echo "WAYLAND_DISPLAY=${WAYLAND_DISPLAY:-}"
+
+# Ensure UTF-8 locale for Qt and desktop components (some environments default to LANG=C).
+if [ "${LANG:-C}" = "C" ] || [ -z "${LANG:-}" ]; then
+  export LANG=C.UTF-8
+fi
+if [ "${LC_ALL:-}" = "C" ] || [ -z "${LC_ALL:-}" ]; then
+  export LC_ALL=C.UTF-8
+fi
+
+# Lingmo components are QtQuick-based and may render blank without GL support in some VMs.
+# Default to software rendering when there's no DRI device (can be overridden by
+# setting these env vars explicitly).
+export QT_QUICK_BACKEND="${QT_QUICK_BACKEND:-software}"
+export QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-software}"
+export QT_OPENGL="${QT_OPENGL:-software}"
+export QSG_RENDER_LOOP="${QSG_RENDER_LOOP:-basic}"
+export LIBGL_ALWAYS_SOFTWARE="${LIBGL_ALWAYS_SOFTWARE:-1}"
+export XDG_SESSION_TYPE="${XDG_SESSION_TYPE:-x11}"
+export XDG_CURRENT_DESKTOP="${XDG_CURRENT_DESKTOP:-Lingmo}"
+export XDG_SESSION_DESKTOP="${XDG_SESSION_DESKTOP:-Lingmo}"
+export KDE_SESSION_VERSION="${KDE_SESSION_VERSION:-5}"
+export QT_QUICK_CONTROLS_STYLE="${QT_QUICK_CONTROLS_STYLE:-lingmo-style}"
+export QT_QUICK_CONTROLS_STYLE_PATH="${QT_QUICK_CONTROLS_STYLE_PATH:-/usr/lib/qt/qml/QtQuick/Controls.2}"
+export QT_ICON_THEME="${QT_ICON_THEME:-Crule-dark}"
+export GTK_ICON_THEME="${GTK_ICON_THEME:-Crule-dark}"
+export GTK_THEME="${GTK_THEME:-Lingmo-dark}"
+export XCURSOR_THEME="${XCURSOR_THEME:-Lingmo-Dark}"
+
+echo "LANG=${LANG:-}"
+echo "LC_ALL=${LC_ALL:-}"
+
+# Ensure we have a session bus (some components crash/exit without it on X11).
+if command -v dbus-run-session >/dev/null 2>&1; then
+  exec dbus-run-session -- /usr/local/bin/lingmo-session-start
+fi
+
+exec /usr/local/bin/lingmo-session-start

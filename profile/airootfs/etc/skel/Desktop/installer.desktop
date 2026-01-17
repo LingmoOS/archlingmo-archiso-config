@@ -1,9 +1,9 @@
 [Desktop Entry]
+Type=Application
 Version=1.0
-Name=System Installer
-Comment=Install ArchLingmo using Calamares
-Exec=sudo -E calamares
+Name=Install System
+GenericName=System Installer
+Exec=/usr/local/bin/autostart-calamares.sh
 Icon=calamares
 Terminal=false
-Type=Application
 Categories=System;

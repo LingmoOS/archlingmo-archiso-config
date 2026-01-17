@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Lingmo Dock
+Exec=lingmo-dock
+X-KDE-autostart-after=panel
+X-GNOME-Autostart-Delay=3

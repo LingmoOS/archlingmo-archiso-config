@@ -1,0 +1,12 @@
+[Unit]
+Description=Fix Lingmo icon resolution (one-shot)
+After=graphical-session.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/update-desktop-database /usr/share/applications
+ExecStart=/usr/bin/update-mime-database /usr/share/mime
+ExecStart=/usr/bin/true
+
+[Install]
+WantedBy=default.target

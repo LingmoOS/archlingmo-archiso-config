@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/lingmo-session"
+mkdir -p "$log_dir"
+log_file="$log_dir/autostart.log"
+
+if [ -w /dev/ttyS0 ]; then
+  exec > >(tee -a "$log_file" /dev/ttyS0) 2>&1
+else
+  exec >>"$log_file" 2>&1
+fi
+echo "----"
+echo "autostart: $(date -Is)"
+echo "DISPLAY=${DISPLAY:-}"
+echo "XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-}"
+
+wait_for_kwin() {
+  for _ in $(seq 1 200); do
+    if pgrep -u "$USER" -x kwin_x11 >/dev/null 2>&1 || pgrep -u "$USER" -x kwin_wayland >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+
+run_supervised() {
+  local proc_name="$1"
+  shift
+
+  if pgrep -u "$USER" -x "$proc_name" >/dev/null 2>&1; then
+    echo "$proc_name already running"
+    return 0
+  fi
+
+  (
+    while true; do
+      echo "starting $proc_name: $*"
+      "$@"
+      rc=$?
+      echo "$proc_name exited rc=$rc; restarting in 1s"
+      sleep 1
+    done
+  ) &
+}
+
+DEFAULT_ICON_THEME_DARK="Crule-dark"
+DEFAULT_ICON_THEME_LIGHT="Crule"
+DEFAULT_WALLPAPER_CANDIDATES=(
+  "/usr/share/backgrounds/lingmoos/default.jpg"
+  "/usr/share/backgrounds/lingmoos/helium_dark.jpg"
+  "/usr/share/backgrounds/lingmoos/helium.jpg"
+)
+
+pick_wallpaper() {
+  for candidate in "${DEFAULT_WALLPAPER_CANDIDATES[@]}"; do
+    if [ -f "$candidate" ]; then
+      printf '%s\n' "$candidate"
+      return 0
+    fi
+  done
+  (find /usr/share/backgrounds -maxdepth 3 -type f 2>/dev/null || true) | head -n 1
+}
+
+wait_for_theme_service() {
+  command -v dbus-send >/dev/null 2>&1 || return 1
+  for _ in $(seq 1 120); do
+    if dbus-send --session --dest=com.lingmo.Settings --print-reply /Theme org.freedesktop.DBus.Peer.Ping >/dev/null 2>&1; then
+      return 0
+    fi
+    sleep 0.1
+  done
+  return 1
+}
+
+get_theme_property() {
+  command -v dbus-send >/dev/null 2>&1 || return 1
+  local prop="$1"
+  local output
+  output=$(dbus-send --session --dest=com.lingmo.Settings --print-reply /Theme org.freedesktop.DBus.Properties.Get string:com.lingmo.Theme string:"$prop" 2>/dev/null || true)
+  printf '%s\n' "$output" | awk -F'"' '/string/ {print $2; exit}'
+}
+
+set_theme_value() {
+  command -v dbus-send >/dev/null 2>&1 || return 1
+  local method="$1"
+  local value="$2"
+  dbus-send --session --dest=com.lingmo.Settings /Theme "com.lingmo.Theme.${method}" string:"$value" >/dev/null 2>&1 || true
+  sleep 0.3
+}
+
+ensure_theme_defaults() {
+  wait_for_theme_service || { echo "com.lingmo.Settings not ready; skipping theme defaults"; return; }
+
+  local icon_theme
+  local dark_icon_theme
+  local wallpaper
+  local default_wallpaper
+
+  default_wallpaper="$(pick_wallpaper)"
+
+  icon_theme="$(get_theme_property iconTheme || true)"
+  if [ -z "${icon_theme:-}" ] || [ ! -d "/usr/share/icons/${icon_theme}" ]; then
+    set_theme_value setIconTheme "$DEFAULT_ICON_THEME_LIGHT"
+  fi
+
+  dark_icon_theme="$(get_theme_property darkIconTheme || true)"
+  if [ -z "${dark_icon_theme:-}" ] || [ ! -d "/usr/share/icons/${dark_icon_theme}" ]; then
+    set_theme_value setDarkIconTheme "$DEFAULT_ICON_THEME_DARK"
+  fi
+
+  wallpaper="$(get_theme_property wallpaper || true)"
+  if [ -z "${wallpaper:-}" ] || [ ! -f "${wallpaper}" ]; then
+    if [ -n "$default_wallpaper" ]; then
+      set_theme_value setWallpaper "$default_wallpaper"
+    fi
+  fi
+}
+
+wait_for_kwin || echo "kwin not detected; continuing anyway"
+
+# Os componentes principais ja sao iniciados pelo lingmo-session-start.
+# Aqui apenas garantimos que o tema/papel de parede foi aplicado apos o
+# daemon estar no ar.
+ensure_theme_defaults || true
+( sleep 5; ensure_theme_defaults ) >/dev/null 2>&1 &
+
+# Fallback imediato de wallpaper para evitar tela preta/branca
+if command -v xwallpaper >/dev/null 2>&1; then
+  wp="$(pick_wallpaper)"
+  if [ -n "$wp" ] && [ -f "$wp" ]; then
+    xwallpaper --zoom "$wp" >/dev/null 2>&1 || true
+  fi
+fi
+
+# Atualiza cache de ícones
+if command -v gtk-update-icon-cache >/dev/null 2>&1; then
+  for theme in /usr/share/icons/*; do
+    if [ -d "$theme" ]; then
+      gtk-update-icon-cache -f -t "$theme" || true
+    fi
+  done
+fi
+
+# Atualiza desktop database
+if command -v update-desktop-database >/dev/null 2>&1; then
+  update-desktop-database /usr/share/applications || true
+fi
+
+# Atualiza mime database
+if command -v update-mime-database >/dev/null 2>&1; then
+  update-mime-database /usr/share/mime || true
+fi
+
+disown -a || true

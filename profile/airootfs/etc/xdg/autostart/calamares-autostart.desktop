@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Calamares Installer
+Comment=Start Calamares automatically in live session
+Exec=/usr/local/bin/autostart-calamares.sh
+X-GNOME-Autostart-enabled=true
+X-KDE-autostart-after=panel
+OnlyShowIn=KDE;GNOME;XFCE;LXQt;Lingmo;

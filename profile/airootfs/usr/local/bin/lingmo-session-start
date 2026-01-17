@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+log_dir="${XDG_STATE_HOME:-$HOME/.local/state}/lingmo-session"
+mkdir -p "$log_dir"
+log_file="$log_dir/session-start.log"
+
+if [ -w /dev/ttyS0 ]; then
+  exec > >(tee -a "$log_file" /dev/ttyS0) 2>&1
+else
+  exec >>"$log_file" 2>&1
+fi
+
+echo "----"
+echo "session-start: $(date -Is)"
+echo "DISPLAY=${DISPLAY:-}"
+echo "XDG_SESSION_TYPE=${XDG_SESSION_TYPE:-}"
+
+run_supervised() {
+  local proc_name="$1"
+  shift
+
+  if command -v pgrep >/dev/null 2>&1 && pgrep -u "$USER" -x "$proc_name" >/dev/null 2>&1; then
+    echo "$proc_name already running"
+    return 0
+  fi
+
+  (
+    while true; do
+      echo "starting $proc_name: $*"
+      "$@"
+      rc=$?
+      echo "$proc_name exited rc=$rc; restarting in 1s"
+      sleep 1
+    done
+  ) &
+}
+
+wait_for_x() {
+  for _ in $(seq 1 200); do
+    [ -n "${DISPLAY:-}" ] && return 0
+    sleep 0.1
+  done
+  return 1
+}
+
+wait_for_x || echo "DISPLAY not set; continuing anyway"
+
+# Core services for shell UX
+command -v lingmo-polkit-agent >/dev/null 2>&1 && run_supervised lingmo-polkit-agent /usr/bin/lingmo-polkit-agent
+command -v lingmo-settings-daemon >/dev/null 2>&1 && run_supervised lingmo-settings-daemon /usr/bin/lingmo-settings-daemon
+command -v lingmo-statusbar >/dev/null 2>&1 && run_supervised lingmo-statusbar /usr/bin/lingmo-statusbar
+command -v lingmo-dock >/dev/null 2>&1 && run_supervised lingmo-dock /usr/bin/lingmo-dock
+
+echo "starting lingmo-session..."
+exec /usr/bin/lingmo-session

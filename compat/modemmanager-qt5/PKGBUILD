@@ -1,0 +1,14 @@
+pkgname=modemmanager-qt5
+pkgver=1
+pkgrel=1
+pkgdesc="Compatibility package providing modemmanager-qt5"
+arch=('any')
+license=('custom')
+depends=('modemmanager-qt')
+provides=('modemmanager-qt5')
+
+package() {
+  install -d "${pkgdir}/usr/share/doc/modemmanager-qt5"
+  printf '%s\n' "Compatibility package for ArchLingmo." \
+    > "${pkgdir}/usr/share/doc/modemmanager-qt5/README"
+}

@@ -1,0 +1,5 @@
+[Desktop Entry]
+Type=Application
+Name=Update Icon Cache
+Exec=/usr/local/bin/lingmo-update-caches.sh
+NoDisplay=true

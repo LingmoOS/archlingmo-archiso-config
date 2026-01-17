@@ -7,7 +7,7 @@ RUN pacman-key --init && \
     echo '[archlinuxcn]' >> /etc/pacman.conf && \
     echo 'Server = https://repo.archlinuxcn.org/$arch' >> /etc/pacman.conf && \
     pacman --noconfirm -Sy archlinuxcn-keyring
-
-CMD sh -c "pacman --noconfirm -Syu && \
-    git clone --depth 1 https://github.com/LingmoOS/archlingmo-archiso-config /config && \
-    mkarchiso -v /config/profile -o /out"
+RUN echo "Server"
+COPY . /config
+CMD ["sh", "-lc", "pacman --noconfirm -Syu && \
+    mkarchiso -v /config/profile -o /out"]

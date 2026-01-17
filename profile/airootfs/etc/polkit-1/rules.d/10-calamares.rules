@@ -1,0 +1,6 @@
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.calamares.pkexec.run" &&
+        (subject.isInGroup("wheel") || subject.user == "lingmo")) {
+        return polkit.Result.YES;
+    }
+});

@@ -3,6 +3,7 @@ amd-ucode
 arch-install-scripts
 b43-fwcutter
 base
+dbus
 broadcom-wl
 diffutils
 efibootmgr
@@ -64,6 +65,8 @@ debootstrap
 networkmanager
 network-manager-applet
 xorg-xhost
+archinstall
+os-prober
 
 # archlinuxcn
 archlinuxcn-keyring
@@ -75,7 +78,7 @@ fastfetch
 ncdu
 aria2
 htop
-p7zip
+7zip
 
 # zsh
 oh-my-zsh-git
@@ -88,12 +91,28 @@ open-vm-tools
 xf86-input-vmmouse
 xf86-video-nouveau
 
+# --- Xorg base (ESSENCIAL) ---
+xorg-server
+xorg-xinit
+xorg-xrandr
+xorg-setxkbmap
+xorg-xinput
+xterm
+
+# --- Mesa / OpenGL ---
+mesa
+
+# --- Drivers fallback (SALVAM VM E HARDWARE ANTIGO) ---
+xf86-video-vesa
+xf86-video-fbdev
+xf86-video-qxl
+
+
 # fonts
 ttf-dejavu
 wqy-zenhei
 
 # gui tools
-calamares
 gparted
 firefox
 
@@ -107,27 +126,35 @@ pipewire-pulse
 pipewire-jack
 pavucontrol
 gst-plugin-pipewire
+qt5-graphicaleffects
+qt5-quickcontrols
+qt5-quickcontrols2
+qt5-svg
+dconf
 
 # lingmo
 sddm
 kwin
-modemmanager-qt5
-lingmo-core
-lingmoui
+LingmoUI
 liblingmo
-lingmo-filemanager
-lingmo-settings
-lingmo-terminal
-lingmo-dock
-lingmo-launcher
-lingmo-statusbar
-lingmo-qt-plugins
-lingmo-kwin-plugins
-lingmo-gtk-themes
-lingmo-systemicons
-lingmo-wallpapers
-lingmo-texteditor
 lingmo-calculator
-lingmo-screenshots
+lingmo-core
+lingmo-cursor-themes
+lingmo-dock
+lingmo-filemanager
+lingmo-gtk-themes
+lingmo-kwin-plugins
+lingmo-launcher
+lingmo-qt-plugins
 lingmo-screenlocker
+lingmo-screenshots
 lingmo-sddm-theme
+lingmo-settings
+lingmo-statusbar
+lingmo-systemicons
+lingmo-terminal
+lingmo-texteditor
+lingmo-videoplayer
+lingmo-wallpapers
+qt5-x11extras
+xwallpaper
